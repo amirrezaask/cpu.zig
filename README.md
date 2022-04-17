@@ -16,4 +16,7 @@ cpu is a cpu simulator.
 - POW OUTREF REF1 REF2
 - ROOT OUTREF REF1 REF2
 
-
+# Todos
+- Stack should be part of memory not another variable
+- Make Insts <-> binary format
+- store Insts binary format in stack
