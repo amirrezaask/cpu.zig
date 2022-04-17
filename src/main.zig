@@ -25,6 +25,41 @@ const Inst = struct {
             .arg2 = arg2,
         };
     }
+    pub fn Sub(out_reg: u8, arg1: Ref, arg2: Ref) Inst {
+        return .{
+            .op_code = .Sub,
+            .out = out_reg,
+            .arg1 = arg1,
+            .arg2 = arg2,
+        };
+    }
+
+    pub fn Div(out_reg: u8, arg1: Ref, arg2: Ref) Inst {
+        return .{
+            .op_code = .Div,
+            .out = out_reg,
+            .arg1 = arg1,
+            .arg2 = arg2,
+        };
+    }
+
+    pub fn Mul(out_reg: u8, arg1: Ref, arg2: Ref) Inst {
+        return .{
+            .op_code = .Mul,
+            .out = out_reg,
+            .arg1 = arg1,
+            .arg2 = arg2,
+        };
+    }
+
+    pub fn Pow(out_reg: u8, arg1: Ref, arg2: Ref) Inst {
+        return .{
+            .op_code = .Pow,
+            .out = out_reg,
+            .arg1 = arg1,
+            .arg2 = arg2,
+        };
+    }
 
     pub fn display(insts: []Inst) void {
         for (insts) |inst, idx| {
@@ -35,10 +70,7 @@ const Inst = struct {
 
 const CPU = struct {
     const Self = @This();
-    pub const OpCodes = enum {
-        Set,
-        Add,
-    };
+    pub const OpCodes = enum { Set, Add, Sub, Div, Mul, Pow };
     const Register = union(enum) {
         // HeapReference: u64, // heap reference
         Value: u64, // value in register like an int
@@ -72,11 +104,61 @@ const CPU = struct {
                         Inst.Ref.Register => |reg| self.registers[reg].Value,
                         Inst.Ref.Value => |val| val,
                     };
-                    const arg2 = switch (inst.arg1) {
+                    const arg2 = switch (inst.arg2) {
                         Inst.Ref.Register => |reg| self.registers[reg].Value,
                         Inst.Ref.Value => |val| val,
                     };
                     self.registers[inst.out] = .{ .Value = arg1 + arg2 };
+                },
+
+                .Sub => {
+                    const arg1 = switch (inst.arg1) {
+                        Inst.Ref.Register => |reg| self.registers[reg].Value,
+                        Inst.Ref.Value => |val| val,
+                    };
+                    const arg2 = switch (inst.arg2) {
+                        Inst.Ref.Register => |reg| self.registers[reg].Value,
+                        Inst.Ref.Value => |val| val,
+                    };
+
+                    self.registers[inst.out] = .{ .Value = arg1 - arg2 };
+                },
+
+                .Div => {
+                    const arg1 = switch (inst.arg1) {
+                        Inst.Ref.Register => |reg| self.registers[reg].Value,
+                        Inst.Ref.Value => |val| val,
+                    };
+                    const arg2 = switch (inst.arg2) {
+                        Inst.Ref.Register => |reg| self.registers[reg].Value,
+                        Inst.Ref.Value => |val| val,
+                    };
+
+                    self.registers[inst.out] = .{ .Value = arg1 / arg2 };
+                },
+                .Mul => {
+                    const arg1 = switch (inst.arg1) {
+                        Inst.Ref.Register => |reg| self.registers[reg].Value,
+                        Inst.Ref.Value => |val| val,
+                    };
+                    const arg2 = switch (inst.arg2) {
+                        Inst.Ref.Register => |reg| self.registers[reg].Value,
+                        Inst.Ref.Value => |val| val,
+                    };
+
+                    self.registers[inst.out] = .{ .Value = arg1 * arg2 };
+                },
+                .Pow => {
+                    const arg1 = switch (inst.arg1) {
+                        Inst.Ref.Register => |reg| self.registers[reg].Value,
+                        Inst.Ref.Value => |val| val,
+                    };
+                    const arg2 = switch (inst.arg2) {
+                        Inst.Ref.Register => |reg| self.registers[reg].Value,
+                        Inst.Ref.Value => |val| val,
+                    };
+
+                    self.registers[inst.out] = .{ .Value = std.math.pow(u64, arg1, arg2) };
                 },
             }
         }
@@ -109,15 +191,11 @@ fn Stack(comptime size: u64) type {
 }
 
 pub fn main() anyerror!void {
-    var insts = [_]Inst{
-        Inst.Set(0, .{ .Value = 10 }),
-        Inst.Set(1, .{ .Value = 10 }),
-        Inst.Add(
-            1,
-            .{ .Register = 0 },
-            .{ .Register = 1 },
-        ),
-    };
+    var insts = [_]Inst{ Inst.Set(0, .{ .Value = 10 }), Inst.Set(1, .{ .Value = 10 }), Inst.Add(
+        1,
+        .{ .Register = 0 },
+        .{ .Register = 1 },
+    ), Inst.Pow(2, .{ .Register = 0 }, .{ .Value = 3 }), Inst.Sub(12, .{ .Value = 1000 }, .{ .Value = 2 }) };
     Inst.display(&insts);
     var cpu = CPU.init();
     try cpu.run(&insts);
