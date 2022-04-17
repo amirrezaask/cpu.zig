@@ -164,6 +164,8 @@ const CPU = struct {
         }
     }
 };
+// Memory []u8
+// 1GB Memory = [10**9]u8
 
 fn Memory(comptime stack_size: u8, comptime heap_size: u8) type {
     return struct {
