@@ -2,6 +2,12 @@ const std = @import("std");
 const Inst = @import("cpu.zig").Inst;
 const CPU = @import("cpu.zig").CPU;
 
+//TODO: 
+    // - make cpu agnostic about stuff in a register each inst should infer that for itself []
+    // - cpu loads insts from memory. []
+    // - stack and heap are on the same memory space []
+
+
 // Memory []u8 => array of bytes(8 bit unsigned integers)
 // 1GB Memory = [10**9]u8
 
@@ -31,22 +37,83 @@ fn Stack(comptime size: u64) type {
 }
 
 pub fn main() anyerror!void {
-    var insts = [_]Inst{ Inst.Set(0, .{ .Value = 10 }), Inst.Set(1, .{ .Value = 10 }), Inst.Add(
-        1,
-        .{ .Register = 0 },
-        .{ .Register = 1 },
-    ), Inst.Pow(2, .{ .Register = 0 }, .{ .Value = 3 }), Inst.Sub(12, .{ .Value = 1000 }, .{ .Value = 2 }) };
-    Inst.display(&insts);
+    // var insts = [_]Inst{ 
+    //     Inst.Set(0, 10), 
+    //     Inst.Set(1, 10), 
+    //     Inst.Add(1, 0, 1), 
+    //     Inst.Set(3, 3),
+    //     Inst.Pow(2, 0, 3), 
+    //     Inst.Sub(12, 2, 2) 
+    // };
+    // Inst.display(&insts);
+    // var cpu = CPU.init();
+    // try cpu.run(&insts);
+    // cpu.registers_state();
+}
+
+
+test "SET" {
+    var insts = [_]Inst{ 
+        Inst.Set(0, 10), 
+    };
     var cpu = CPU.init();
     try cpu.run(&insts);
-    cpu.registers_state();
+    try std.testing.expectEqual(@as(u64, 10), cpu.registers[0]);
 }
-// todos:
-// change register into just being a simple u64, based on inst we should decide to see it as a value or a memory addr
-// memory should be a simple array of u8
-// from start we work with it as stack and from end as heap
-// loading insts at the end and reserve that for program insts
 
-test "basic test" {
-    try std.testing.expectEqual(10, 3 + 7);
+test "Add" {
+    var insts = [_]Inst{ 
+        Inst.Set(0, 10), 
+        Inst.Set(1, 10), 
+        Inst.Add(2, 0, 1), 
+    };
+    var cpu = CPU.init();
+    try cpu.run(&insts);
+    try std.testing.expectEqual(@as(u64, 20), cpu.registers[2]);
+
 }
+
+test "Sub" {
+    var insts = [_]Inst{ 
+        Inst.Set(0, 20), 
+        Inst.Set(1, 10), 
+        Inst.Sub(2, 0, 1), 
+    };
+    var cpu = CPU.init();
+    try cpu.run(&insts);
+    try std.testing.expectEqual(@as(u64, 10), cpu.registers[2]);
+
+}
+test "Mul" {
+    var insts = [_]Inst{ 
+        Inst.Set(0, 20), 
+        Inst.Set(1, 10), 
+        Inst.Mul(2, 0, 1), 
+    };
+    var cpu = CPU.init();
+    try cpu.run(&insts);
+    try std.testing.expectEqual(@as(u64, 200), cpu.registers[2]);
+
+}
+test "Div" {
+    var insts = [_]Inst{ 
+        Inst.Set(0, 20), 
+        Inst.Set(1, 10), 
+        Inst.Div(2, 0, 1), 
+    };
+    var cpu = CPU.init();
+    try cpu.run(&insts);
+    try std.testing.expectEqual(@as(u64, 2), cpu.registers[2]);
+
+}
+test "Pow" {
+    var insts = [_]Inst{ 
+        Inst.Set(0, 20), 
+        Inst.Set(1, 2), 
+        Inst.Pow(2, 0, 1), 
+    };
+    var cpu = CPU.init();
+    try cpu.run(&insts);
+    try std.testing.expectEqual(@as(u64, 400), cpu.registers[2]);
+}
+

@@ -1,24 +1,20 @@
 const std = @import("std");
 
 pub const Inst = struct {
-    const Ref = union(enum) {
-        Value: u64,
-        Register: u8,
-    };
     op_code: CPU.OpCodes,
-    out: u8, // is always a register number
-    arg1: Ref = undefined,
-    arg2: Ref = undefined,
+    out: u64,
+    arg1: u64 = undefined,
+    arg2: u64 = undefined,
 
-    pub fn Set(out_reg: u8, in_ref: Ref) Inst {
+    pub fn Set(out_reg: u64, value: u64) Inst {
         return .{
             .op_code = .Set,
             .out = out_reg,
-            .arg1 = in_ref,
+            .arg1 = value,
         };
     }
 
-    pub fn Add(out_reg: u8, arg1: Ref, arg2: Ref) Inst {
+    pub fn Add(out_reg: u64, arg1: u64, arg2: u64) Inst {
         return .{
             .op_code = .Add,
             .out = out_reg,
@@ -26,7 +22,7 @@ pub const Inst = struct {
             .arg2 = arg2,
         };
     }
-    pub fn Sub(out_reg: u8, arg1: Ref, arg2: Ref) Inst {
+    pub fn Sub(out_reg: u64, arg1: u64, arg2: u64) Inst {
         return .{
             .op_code = .Sub,
             .out = out_reg,
@@ -35,7 +31,7 @@ pub const Inst = struct {
         };
     }
 
-    pub fn Div(out_reg: u8, arg1: Ref, arg2: Ref) Inst {
+    pub fn Div(out_reg: u64, arg1: u64, arg2: u64) Inst {
         return .{
             .op_code = .Div,
             .out = out_reg,
@@ -44,7 +40,7 @@ pub const Inst = struct {
         };
     }
 
-    pub fn Mul(out_reg: u8, arg1: Ref, arg2: Ref) Inst {
+    pub fn Mul(out_reg: u64, arg1: u64, arg2: u64) Inst {
         return .{
             .op_code = .Mul,
             .out = out_reg,
@@ -53,7 +49,7 @@ pub const Inst = struct {
         };
     }
 
-    pub fn Pow(out_reg: u8, arg1: Ref, arg2: Ref) Inst {
+    pub fn Pow(out_reg: u64, arg1: u64, arg2: u64) Inst {
         return .{
             .op_code = .Pow,
             .out = out_reg,
@@ -72,11 +68,9 @@ pub const Inst = struct {
 pub const CPU = struct {
     const Self = @This();
     pub const OpCodes = enum { Set, Add, Sub, Div, Mul, Pow };
-    const Register = union(enum) {
-        Value: u64, // value in register like an int
-    };
-
-    registers: [16]Register = undefined,
+    
+    // 64 bit integer value can be either a reference to memory or value itself
+    registers: [16]u64= undefined,
 
     pub fn init() CPU {
         return .{};
@@ -84,7 +78,7 @@ pub const CPU = struct {
 
     pub fn registers_state(self: Self) void {
         for (self.registers) |reg, idx| {
-            std.debug.print("{}: {}\n", .{ idx, reg.Value });
+            std.debug.print("{}: {}\n", .{ idx, reg });
         }
     }
 
@@ -92,72 +86,25 @@ pub const CPU = struct {
         for (insts) |inst| {
             switch (inst.op_code) {
                 .Set => {
-                    self.registers[inst.out] = switch (inst.arg1) {
-                        Inst.Ref.Register => |reg| self.registers[reg],
-                        Inst.Ref.Value => |val| CPU.Register{ .Value = val },
-                    };
+                    self.registers[inst.out] = inst.arg1;
                 },
 
                 .Add => {
-                    const arg1 = switch (inst.arg1) {
-                        Inst.Ref.Register => |reg| self.registers[reg].Value,
-                        Inst.Ref.Value => |val| val,
-                    };
-                    const arg2 = switch (inst.arg2) {
-                        Inst.Ref.Register => |reg| self.registers[reg].Value,
-                        Inst.Ref.Value => |val| val,
-                    };
-                    self.registers[inst.out] = .{ .Value = arg1 + arg2 };
+                    self.registers[inst.out] = self.registers[inst.arg1] + self.registers[inst.arg2];
                 },
 
                 .Sub => {
-                    const arg1 = switch (inst.arg1) {
-                        Inst.Ref.Register => |reg| self.registers[reg].Value,
-                        Inst.Ref.Value => |val| val,
-                    };
-                    const arg2 = switch (inst.arg2) {
-                        Inst.Ref.Register => |reg| self.registers[reg].Value,
-                        Inst.Ref.Value => |val| val,
-                    };
-
-                    self.registers[inst.out] = .{ .Value = arg1 - arg2 };
+                    self.registers[inst.out] = self.registers[inst.arg1] - self.registers[inst.arg2];
                 },
 
                 .Div => {
-                    const arg1 = switch (inst.arg1) {
-                        Inst.Ref.Register => |reg| self.registers[reg].Value,
-                        Inst.Ref.Value => |val| val,
-                    };
-                    const arg2 = switch (inst.arg2) {
-                        Inst.Ref.Register => |reg| self.registers[reg].Value,
-                        Inst.Ref.Value => |val| val,
-                    };
-
-                    self.registers[inst.out] = .{ .Value = arg1 / arg2 };
+                    self.registers[inst.out] = self.registers[inst.arg1] / self.registers[inst.arg2];
                 },
                 .Mul => {
-                    const arg1 = switch (inst.arg1) {
-                        Inst.Ref.Register => |reg| self.registers[reg].Value,
-                        Inst.Ref.Value => |val| val,
-                    };
-                    const arg2 = switch (inst.arg2) {
-                        Inst.Ref.Register => |reg| self.registers[reg].Value,
-                        Inst.Ref.Value => |val| val,
-                    };
-
-                    self.registers[inst.out] = .{ .Value = arg1 * arg2 };
+                    self.registers[inst.out] = self.registers[inst.arg1] * self.registers[inst.arg2];
                 },
                 .Pow => {
-                    const arg1 = switch (inst.arg1) {
-                        Inst.Ref.Register => |reg| self.registers[reg].Value,
-                        Inst.Ref.Value => |val| val,
-                    };
-                    const arg2 = switch (inst.arg2) {
-                        Inst.Ref.Register => |reg| self.registers[reg].Value,
-                        Inst.Ref.Value => |val| val,
-                    };
-
-                    self.registers[inst.out] = .{ .Value = std.math.pow(u64, arg1, arg2) };
+                    self.registers[inst.out] = std.math.pow(u64, self.registers[inst.arg1], self.registers[inst.arg2]);
                 },
             }
         }
