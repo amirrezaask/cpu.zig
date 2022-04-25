@@ -13,7 +13,7 @@ fn Memory(comptime size: u64) type {
 
         pub fn get_ref_range(self: *Self, start: u64, length: u64) []u8 {
             const start_byte = self.data.len - start - 1;
-            return self.data[start_byte..start_byte+length];
+            return self.data[start_byte .. start_byte + length];
         }
 
         pub fn set_ref(self: *Self, ref: u64, val: u8) void {
@@ -102,9 +102,9 @@ pub const Inst = struct {
 pub const CPU = struct {
     const Self = @This();
     pub const OpCodes = enum { Set, Add, Sub, Div, Mul, Pow };
-    
+
     // 64 bit integer value can be either a reference to memory or value itself
-    registers: [16]u64= undefined,
+    registers: [16]u64 = undefined,
 
     pub fn init() CPU {
         return .{};
@@ -145,10 +145,9 @@ pub const CPU = struct {
     }
 };
 
-
 test "SET" {
-    var insts = [_]Inst{ 
-        Inst.Set(0, 10), 
+    var insts = [_]Inst{
+        Inst.Set(0, 10),
     };
     var cpu = CPU.init();
     try cpu.run(&insts);
@@ -156,62 +155,57 @@ test "SET" {
 }
 
 test "Add" {
-    var insts = [_]Inst{ 
-        Inst.Set(0, 10), 
-        Inst.Set(1, 10), 
-        Inst.Add(2, 0, 1), 
+    var insts = [_]Inst{
+        Inst.Set(0, 10),
+        Inst.Set(1, 10),
+        Inst.Add(2, 0, 1),
     };
     var cpu = CPU.init();
     try cpu.run(&insts);
     try std.testing.expectEqual(@as(u64, 20), cpu.registers[2]);
-
 }
 
 test "Sub" {
-    var insts = [_]Inst{ 
-        Inst.Set(0, 20), 
-        Inst.Set(1, 10), 
-        Inst.Sub(2, 0, 1), 
+    var insts = [_]Inst{
+        Inst.Set(0, 20),
+        Inst.Set(1, 10),
+        Inst.Sub(2, 0, 1),
     };
     var cpu = CPU.init();
     try cpu.run(&insts);
     try std.testing.expectEqual(@as(u64, 10), cpu.registers[2]);
-
 }
 test "Mul" {
-    var insts = [_]Inst{ 
-        Inst.Set(0, 20), 
-        Inst.Set(1, 10), 
-        Inst.Mul(2, 0, 1), 
+    var insts = [_]Inst{
+        Inst.Set(0, 20),
+        Inst.Set(1, 10),
+        Inst.Mul(2, 0, 1),
     };
     var cpu = CPU.init();
     try cpu.run(&insts);
     try std.testing.expectEqual(@as(u64, 200), cpu.registers[2]);
-
 }
 test "Div" {
-    var insts = [_]Inst{ 
-        Inst.Set(0, 20), 
-        Inst.Set(1, 10), 
-        Inst.Div(2, 0, 1), 
+    var insts = [_]Inst{
+        Inst.Set(0, 20),
+        Inst.Set(1, 10),
+        Inst.Div(2, 0, 1),
     };
     var cpu = CPU.init();
     try cpu.run(&insts);
     try std.testing.expectEqual(@as(u64, 2), cpu.registers[2]);
-
 }
 test "Pow" {
-    var insts = [_]Inst{ 
-        Inst.Set(0, 20), 
-        Inst.Set(1, 2), 
-        Inst.Pow(2, 0, 1), 
+    var insts = [_]Inst{
+        Inst.Set(0, 20),
+        Inst.Set(1, 2),
+        Inst.Pow(2, 0, 1),
     };
     var cpu = CPU.init();
     try cpu.run(&insts);
     try std.testing.expectEqual(@as(u64, 400), cpu.registers[2]);
 }
 
- 
 test "memory push and pop from stack" {
     var mem = Memory(100){};
     mem.push(1);
